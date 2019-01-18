@@ -1,0 +1,13 @@
+[package]
+name = "padding_derive"
+version = "0.1.0"
+authors = ["Kitsu <mail@kitsu.me>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "0.15.26"
+quote = "0.6.10"
+padding_traits = { path = "../padding_traits" }

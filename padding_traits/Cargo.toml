@@ -1,0 +1,7 @@
+[package]
+name = "padding_traits"
+version = "0.1.0"
+authors = ["Kitsu <mail@kitsu.me>"]
+edition = "2018"
+
+[dependencies]

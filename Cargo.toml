@@ -1,0 +1,9 @@
+[package]
+name = "padding-nullifier"
+version = "0.1.0"
+authors = ["Kitsu <mail@kitsu.me>"]
+edition = "2018"
+
+[dependencies]
+padding_derive = { path = "padding_derive" }
+padding_traits = { path = "padding_traits" }
