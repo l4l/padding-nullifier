@@ -6,9 +6,6 @@ use quote::quote;
 use syn::parse;
 use syn::Data::{Enum, Struct, Union};
 
-#[allow(unused_imports)]
-use padding_traits::Padder;
-
 #[proc_macro_derive(Padder)]
 pub fn padder_derive(input: TokenStream) -> TokenStream {
     let ast: syn::DeriveInput = parse(input).unwrap();
@@ -26,7 +23,11 @@ pub fn padder_derive(input: TokenStream) -> TokenStream {
                       let struct_align = [#(#struct_align),*].iter().max().unwrap();
                       let _ = [#(#field_sized),*]
                         .iter()
-                        .zip([#(#field_aligns),*].iter().skip(1).chain(std::iter::once(struct_align))).fold(0, |offset, (field_size, next_align)| {
+                        .zip([#(#field_aligns),*]
+                          .iter()
+                          .skip(1)
+                          .chain(std::iter::once(struct_align)))
+                        .fold(0, |offset, (field_size, next_align)| {
                           let field_end = offset + field_size;
                           let padding_size = next_align.checked_sub(*field_size).unwrap_or(0);
                           let next_offset = field_end + padding_size;
