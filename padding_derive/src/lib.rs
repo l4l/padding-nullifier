@@ -14,22 +14,24 @@ pub fn padder_derive(input: TokenStream) -> TokenStream {
     match ast.data {
         Struct(s) => {
             let types = || s.fields.iter().map(|f| &f.ty);
-            let struct_align = types().map(|ty| quote!(std::mem::align_of::<#ty>()));
-            let field_aligns = types().map(|ty| quote!(std::mem::align_of::<#ty>()));
-            let field_sized = types().map(|ty| quote!(std::mem::size_of::<#ty>()));
+            let field_aligns = types().map(|ty| quote!(<#ty>::alignof()));
+            let next_aligns = types().map(|ty| quote!(<#ty>::alignof()));
+            let field_sizes = types().map(|ty| quote!(std::mem::size_of::<#ty>()));
             let gen = quote! {
                 impl Padder for #name {
                     fn fill_padding(buf: &mut [u8]) {
-                      let struct_align = [#(#struct_align),*].iter().max().unwrap();
-                      let _ = [#(#field_sized),*]
+                      let struct_align = #name::alignof();
+                      let _ = [#(#field_sizes),*]
                         .iter()
-                        .zip([#(#field_aligns),*]
+                        .zip([#(#next_aligns),*]
                           .iter()
                           .skip(1)
-                          .chain(std::iter::once(struct_align)))
-                        .fold(0, |offset, (field_size, next_align)| {
+                          .chain(std::iter::once(&struct_align)))
+                        .zip([#(#field_aligns),*].iter())
+                        .fold(0, |offset, ((field_size, next_align), field_align)| {
                           let field_end = offset + field_size;
-                          let padding_size = next_align.checked_sub(*field_size).unwrap_or(0);
+                          let padding_size = field_end % next_align;
+                          let padding_size = (next_align - padding_size) % next_align;
                           let next_offset = field_end + padding_size;
 
                           for mut b in buf[field_end..next_offset].iter_mut() {
@@ -44,5 +46,37 @@ pub fn padder_derive(input: TokenStream) -> TokenStream {
         }
         Enum(_e) => unimplemented!(),
         Union(_u) => unimplemented!(),
+    }
+}
+
+#[proc_macro_derive(Alignof)]
+pub fn alignof_derive(input: TokenStream) -> TokenStream {
+    let ast: syn::DeriveInput = parse(input).unwrap();
+    let name = &ast.ident;
+
+    match ast.data {
+        Struct(s) => {
+            let types = || s.fields.iter().map(|f| &f.ty);
+            let struct_align = types().map(|ty| quote!(<#ty>::alignof()));
+            let gen = quote! {
+                impl Alignof for #name {
+                  fn alignof() -> usize {
+                    [#(#struct_align),*].iter().max().unwrap().clone()
+                  }
+                }
+            };
+            return gen.into();
+        }
+        Enum(_) => unimplemented!(),
+        Union(_) => {
+            let gen = quote! {
+              impl Alignof for #name {
+                fn alignof() -> usize {
+                  u8::alignof()
+                }
+              }
+            };
+            gen.into()
+        }
     }
 }
