@@ -8,7 +8,7 @@ fn padding_simple(c: &mut Criterion) {
     c.bench_function("padding_simple", {
         |b| {
             #[repr(C)]
-            #[derive(Padder)]
+            #[derive(Padder, Alignof)]
             struct S {
                 a: i8,
                 b: u32,
@@ -27,7 +27,7 @@ fn padding_nop(c: &mut Criterion) {
     c.bench_function("padding_nop", {
         |b| {
             #[repr(C)]
-            #[derive(Padder)]
+            #[derive(Padder, Alignof)]
             struct S {
                 a: i8,
                 b: i8,

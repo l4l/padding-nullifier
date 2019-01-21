@@ -8,6 +8,35 @@ mod tests {
 
     #[repr(C)]
     #[derive(Padder, Alignof)]
+    struct A {
+        a: i8,
+        b: [u16; 3],
+    }
+
+    #[repr(C)]
+    #[derive(Padder, Alignof)]
+    struct B {
+        a1: A,
+        a2: A,
+    }
+
+    #[test]
+    fn test_padding_buf() {
+        assert_eq!(
+            A::padding_buf(),
+            &[0xff, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff]
+        );
+        assert_eq!(
+            B::padding_buf(),
+            &[
+                0xff, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff,
+                0xff, 0xff
+            ]
+        );
+    }
+
+    #[repr(C)]
+    #[derive(Padder, Alignof)]
     struct Flat {
         a: i8,
         b: u32,
@@ -78,6 +107,26 @@ mod tests {
             [
                 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
                 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
+            ]
+        );
+    }
+
+    #[repr(C)]
+    #[derive(Padder, Alignof)]
+    struct Nested {
+        nt: NewType,
+        ft: Flat,
+    }
+
+    #[test]
+    fn test_nested() {
+        let mut buf = [0xffu8; size_of::<Nested>()];
+        Nested::fill_padding(&mut buf);
+        assert_eq!(
+            buf,
+            [
+                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff,
+                0xff, 0xff, 0xff, 0xff, 0x00, 0x00
             ]
         );
     }
