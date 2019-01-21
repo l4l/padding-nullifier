@@ -1,0 +1,9 @@
+os:
+  - linux
+language: rust
+cache: cargo
+rust:
+- nightly
+- stable
+after_success:
+  cargo bench
